@@ -5,3 +5,5 @@
 *.itp
 *.pdb
 *.gro
+*.mdp
+*.ndx
