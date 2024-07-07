@@ -39,20 +39,6 @@ func WalkMatch(pattern string) []string {
     return matches
 }
 
-func getFiles() []string {
-	files, err := os.ReadDir(getWd())
-	if err != nil {
-		panic("Couldn't read directory")
-	}
-	output := []string{}
-
-	for _, file := range files {
-		file.Type()
-		output = append(output, file.Name())
-	}
-	return output
-}
-
 type model struct {
 	header         string
 	currentCommand []string
@@ -122,7 +108,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "-p":
 			m.choices = WalkMatch("*.top")
 		case "-deffnm":
-			m.choices = getFiles()
+			m.choices = WalkMatch("*.tpr")
 		default:
 			m.choices = getOptions(m.currentCommand[1])
 		}
@@ -135,9 +121,10 @@ func (m model) View() string {
 	s += fmt.Sprintf("\nWorking Dir: %s\n\n", getWd())
 	s += "Current Command:\n"
 	for _, cmd := range m.currentCommand {
-		s += fmt.Sprintf("\t%s\n", cmd)
+		s += fmt.Sprintf("%s\n", cmd)
 	}
-	s += "\n\n"
+	s += "\n"
+
 	for i, choice := range m.choices {
 		cursor := " " // no cursor
 		if m.cursor == i {
