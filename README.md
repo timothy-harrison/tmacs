@@ -9,3 +9,7 @@ It is written in Go using the [Bubble Tea](https://github.com/charmbracelet/bubb
 ### Install
 
 Clone the repo and install Go. Then simply locate the directory and run `go build` which will output a binary file. Add the binary to your path or alias.
+
+## Contributors
+
+I welcome any person who wants to contribute to this package.
