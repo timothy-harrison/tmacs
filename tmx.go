@@ -49,11 +49,11 @@ type model struct {
 	choices        []string
 	cursor         int
 	runningCommand bool
-	textInput textinput.Model
-	filePicker filepicker.Model
-	selectedFile string
+	textInput      textinput.Model
+	filePicker     filepicker.Model
+	selectedFile   string
 	openFilePicker bool
-	err error
+	err            error
 }
 
 type runCmd bool
@@ -64,6 +64,8 @@ func getOptions(command string) []string {
 		return []string{"-deffnm", "-o", "-c", "-s"}
 	case "grompp":
 		return []string{"-f", "-c", "-r", "-p", "-n", "-maxwarn"}
+	case "trjconv":
+		return []string{"-f", "-s", "-n", "-fr", "-o"}
 	default:
 		return []string{}
 	}
@@ -79,17 +81,16 @@ func initialModel() model {
 	fp.CurrentDirectory, _ = os.UserHomeDir()
 	fp.FileAllowed = true
 
-
 	return model{
 		header:         "- tmacs -\nA wrapper for gromacs written by Timothy Harrison\n",
 		currentCommand: []string{"gmx"},
-		choices:        []string{"grompp", "mdrun", "solvate", "genion", "pdb2gmx", "editconf", "make_ndx"},
+		choices:        []string{"grompp", "mdrun", "solvate", "genion", "pdb2gmx", "editconf", "make_ndx", "trjconv"},
 		runningCommand: false,
-		textInput: ti,
-		filePicker: fp,
-		selectedFile: "",
+		textInput:      ti,
+		filePicker:     fp,
+		selectedFile:   "",
 		openFilePicker: false,
-		err: nil,
+		err:            nil,
 	}
 }
 
@@ -112,7 +113,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.cursor > 0 && !m.textInput.Focused() {
 				m.cursor--
 			} else {
-				m.cursor = len(m.choices)-1
+				m.cursor = len(m.choices) - 1
 			}
 		case "down", "j":
 			if m.cursor < len(m.choices)-1 && !m.textInput.Focused() {
@@ -179,24 +180,45 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 	// If the cmd hasn't been selected, show the commands.
 	if len(m.currentCommand) == 1 {
-		m.choices = []string{"grompp", "mdrun", "solvate", "genion", "pdb2gmx", "editconf", "make_ndx"}
+		m.choices = []string{"grompp", "mdrun", "solvate", "genion", "pdb2gmx", "editconf", "make_ndx", "trjconv"}
 		return m, nil
 	} else if len(m.currentCommand) == 2 {
 		m.choices = getOptions(m.currentCommand[1])
 	} else {
-		switch m.currentCommand[len(m.currentCommand)-1] {
-		case "-f":
-			m.choices = WalkMatch("*.mdp")
-		case "-c", "-r":
-			m.choices = WalkMatch("*.pdb")
-		case "-p":
-			m.choices = WalkMatch("*.top")
-		case "-deffnm":
-			m.choices = WalkMatch("*.tpr")
-		case "-s":
-			m.choices = WalkMatch("*.tpr")
+		switch m.currentCommand[1] {
+		case "grompp":
+			switch m.currentCommand[len(m.currentCommand)-1] {
+			case "-f":
+				m.choices = WalkMatch("*.mdp")
+			case "-c", "-r":
+				m.choices = WalkMatch("*.pdb")
+			case "-p":
+				m.choices = WalkMatch("*.top")
+			case "-deffnm":
+				m.choices = WalkMatch("*.tpr")
+			case "-s":
+				m.choices = WalkMatch("*.tpr")
+			default:
+				m.choices = getOptions(m.currentCommand[1])
+			}
+		case "trjconv":
+			switch m.currentCommand[len(m.currentCommand)-1] {
+			case "-f", "-o":
+				m.choices = WalkMatch("*.xtc")
+			case "-s":
+				m.choices = WalkMatch("*.tpr")
+			case "-n", "-fr":
+				m.choices = WalkMatch("*.ndx")
+			default:
+				m.choices = getOptions("trjconv")
+			}
 		default:
-			m.choices = getOptions(m.currentCommand[1])
+			switch m.currentCommand[len(m.currentCommand)-1] {
+			case "-deffnm", "-s":
+				m.choices = WalkMatch("*.tpr")
+			default:
+				m.choices = getOptions(m.currentCommand[1])
+			}
 		}
 	}
 	return m, nil
